@@ -8,9 +8,11 @@ import android.widget.ListView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.titus.meineersteapp.databinding.ActivityMainBinding
-
+import com.titus.meineersteapp.DataStoreManager
+import kotlinx.coroutines.launch
 
 
 class MainActivity : AppCompatActivity() {
@@ -20,6 +22,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var fab: FloatingActionButton
     private lateinit var shoppingItams: ArrayList<String>
     private lateinit var itemAdapter: ArrayAdapter<String>
+    private lateinit var dataStoreManager: DataStoreManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,6 +36,17 @@ class MainActivity : AppCompatActivity() {
         shoppingItams = ArrayList()
         itemAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, shoppingItams)
         lvTodo.adapter = itemAdapter
+        dataStoreManager = DataStoreManager(this)
+
+
+
+        lifecycleScope.launch { dataStoreManager.shoppingListFlow.collect { list ->
+            for (item in list) {
+                shoppingItams.add(item)
+                itemAdapter.notifyDataSetChanged()
+            }
+        } }
+
 
 
         fab.setOnClickListener {
@@ -51,6 +65,8 @@ class MainActivity : AppCompatActivity() {
                 if (inputText.isNotEmpty()) {
                     shoppingItams.add(inputText)
                     itemAdapter.notifyDataSetChanged()
+                    lifecycleScope.launch { dataStoreManager.saveShoppingList(shoppingItams) }
+
                 }
                 else {
                     Toast.makeText(applicationContext, "Eingabefeld darf nicht leer sein", Toast.LENGTH_SHORT).show()
