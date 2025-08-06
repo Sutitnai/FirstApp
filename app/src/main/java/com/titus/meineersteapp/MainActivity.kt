@@ -37,13 +37,16 @@ class MainActivity : AppCompatActivity() {
         itemAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, shoppingItams)
         lvTodo.adapter = itemAdapter
         dataStoreManager = DataStoreManager(this)
-
+        var app_started = true
 
 
         lifecycleScope.launch { dataStoreManager.shoppingListFlow.collect { list ->
-            for (item in list) {
-                shoppingItams.add(item)
-                itemAdapter.notifyDataSetChanged()
+            if (app_started) {
+                for (item in list) {
+                    shoppingItams.add(item)
+                    itemAdapter.notifyDataSetChanged()
+                }
+                app_started = false
             }
         } }
 
@@ -90,6 +93,7 @@ class MainActivity : AppCompatActivity() {
             builder.setPositiveButton("JA"){ _, _ ->
                 shoppingItams.removeAt(position)
                 itemAdapter.notifyDataSetChanged()
+                lifecycleScope.launch { dataStoreManager.saveShoppingList(shoppingItams) }
             }
 
             builder.setNegativeButton("Nein"){ _, _ ->}
